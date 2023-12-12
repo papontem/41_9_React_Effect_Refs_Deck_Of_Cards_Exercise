@@ -16,6 +16,8 @@ function DeckOfCards(props) {
     const [deck, setDeck] = useState('');
     const [drawnCard, setDrawnCard] = useState('');
     
+    // State to keep track of when the cards are being shuffled
+    const [isShuffling, setIsShuffling] = useState(false);
     
     // useEffect to get deck of cards from the api and save it in state
     // this is called *after* component first added to DOM
@@ -89,14 +91,45 @@ function DeckOfCards(props) {
           }
     }
 
+    const shuffleDeckHandler = async () => {
+        // Set the loading state to true
+        setIsShuffling(true);
+
+        console.log("SHUFFLING!!!");
+        // get the deck id and call the api to shuffle the deck for us pls and thank you
+        try {
+            // SHUFFLE THE DECK WITH THE API CALL TO https://deckofcardsapi.com/api/deck/<<deck_id>>/shuffle/
+            const shuffleResult = await axios.get(
+                `https://deckofcardsapi.com/api/deck/${deck.deck_id}/shuffle/`
+                );
+                console.log("Shuffle Result:", shuffleResult);
+            
+            // Update the deck in state and local storage with the shuffled deck
+            const shuffledDeck = { ...deck, remaining: shuffleResult.data.remaining };
+            setDeck(shuffledDeck);
+            localStorage.setItem("deck", JSON.stringify(shuffledDeck));
+            
+            // set drawnCard back to ''
+            setDrawnCard('');
+        } catch (error) {
+            console.error("Error shuffling deck:", error);
+        } finally {
+            // Set the loading state back to false when the shuffle is completed
+            setIsShuffling(false);
+        }
+    }
+
       
 
     return(
         <div className="DeckOfCards">
             <div className="DeckOfCards-info">
                 <p>deck id: <b>{deck ? <i>{deck.deck_id}</i> : <i>- loading -</i>}</b> </p>
+                <p>deck remaining: <b>{deck ? <i>{deck.remaining}</i> : <i>- loading -</i>}</b> </p>
             </div>
             <button className="DeckOfCards-draw-button" onClick={drawCardHandler} >Draw A Card</button>
+            {isShuffling ? 'Shuffling...' : <button className="DeckOfCards-shuffle-button" onClick={shuffleDeckHandler}> Shuffle </button>}
+           
 
             <div className="DeckOfCards-card-container"> 
                 <img 
